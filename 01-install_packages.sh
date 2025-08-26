@@ -12,6 +12,7 @@ packages=(
     libeigen3-dev
     libboost-all-dev
     htop
+    ccrypt
 )
 
 for package in "${packages[@]}"; do
