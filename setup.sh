@@ -12,7 +12,8 @@ echo "=========================================="
 
 # 파일명 앞 2자리가 숫자인 .sh 파일을 찾아서 정렬
 # sort -V 옵션은 01, 05, 10 순서와 같이 자연스러운 버전 정렬을 수행합니다.
-for script in $(ls | grep '^[0-9][0-9]-.*\.sh' | sort -V); do
+# .cpt 확장자를 가진 파일은 제외
+for script in $(ls | grep '^[0-9][0-9]-.*\.sh' | grep -v '\.cpt$' | sort -V); do
     echo "--- $script 를 실행합니다 ---"
     # 실행 권한이 있는지 확인하고 없으면 추가
     if [ ! -x "$script" ]; then
@@ -22,8 +23,7 @@ for script in $(ls | grep '^[0-9][0-9]-.*\.sh' | sort -V); do
     # 서브 스크립트 실행
     ./"$script"
     if [ $? -ne 0 ]; then
-        echo "  > 오류: $script 실행에 실패했습니다. 스크립트를 중단합니다."
-        exit 1
+        echo "  > 오류: $script 실행에 실패했습니다. 계속 진행합니다."
     fi
     echo "--- $script 실행 완료 ---"
     echo ""
