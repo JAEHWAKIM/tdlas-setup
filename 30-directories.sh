@@ -6,7 +6,10 @@ dirs=(
     /media/usb
     /opt/tdlas
     /etc/opt/tdlas
-    /etc/opt/tdlas/recipe
+    /etc/opt/tdlas/das
+    /etc/opt/tdlas/das/recipe
+    /etc/opt/tdlas/cfwms
+    /etc/opt/tdlas/cfwms/recipe
 )
 
 for dir in "${dirs[@]}"; do
