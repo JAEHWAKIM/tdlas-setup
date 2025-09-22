@@ -30,17 +30,17 @@ for package in "${packages[@]}"; do
 done
 
 # 기본 데이터베이스 및 사용자 정보를 입력받기
-read -p "데이터베이스 이름을 입력하세요: " DB_NAME
-read -p "데이터베이스 사용자 이름을 입력하세요: " DB_USER
+read -p "Database name: " DB_NAME
+read -p "Database user: " DB_USER
 while true; do
-    read -sp "데이터베이스 사용자 비밀번호를 입력하세요: " DB_PASS
+    read -sp "password: " DB_PASS
     echo
-    read -sp "비밀번호를 다시 입력하세요: " DB_PASS_CONFIRM
+    read -sp "Confirm password: " DB_PASS_CONFIRM
     echo
     if [ "$DB_PASS" == "$DB_PASS_CONFIRM" ]; then
         break
     else
-        echo "비밀번호가 일치하지 않습니다. 다시 시도하세요."
+        echo "Passwords do not match. Please try again."
     fi
 done
 echo
