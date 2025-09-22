@@ -22,6 +22,14 @@ else
     echo "dtparam=pciex1_gen=3 already exists in $CONFIG_FILE."
 fi
 
+# Enable max USB current in /boot/firmware/config.txt
+if ! grep -q "^max_usb_current_enable=1" "$CONFIG_FILE"; then
+    echo "Adding max_usb_current_enable=1 to $CONFIG_FILE..."
+    echo "max_usb_current_enable=1" | sudo tee -a "$CONFIG_FILE"
+else
+    echo "max_usb_current_enable=1 already exists in $CONFIG_FILE."
+fi
+
 # Prompt for restart
 read -p "System needs to restart for changes to take effect. Restart now? (y/n): " RESTART_CONFIRM
 if [[ "$RESTART_CONFIRM" == "y" || "$RESTART_CONFIRM" == "Y" ]]; then
@@ -30,3 +38,4 @@ if [[ "$RESTART_CONFIRM" == "y" || "$RESTART_CONFIRM" == "Y" ]]; then
 else
     echo "Restart canceled. Please restart manually to apply changes."
 fi
+
