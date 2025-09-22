@@ -1,0 +1,17 @@
+[Unit]
+Description=TDLAS Broadcast Receiver Service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/tdlas
+ExecStart=/opt/tdlas/broadcast_receiver
+KillSignal=SIGINT
+SendSIGKILL=no
+Restart=on-failure
+RestartSec=5s
+StandardOutput=tty
+TTYPath=/dev/tty3
+
+[Install]
+WantedBy=multi-user.target 

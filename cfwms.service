@@ -1,0 +1,17 @@
+[Unit]
+Description=TDLAS CF-WMS Service
+After=network.target syslog.target mysql.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/tdlas
+ExecStart=/opt/tdlas/cfwms
+KillSignal=SIGINT
+SendSIGKILL=no
+Restart=on-failure
+RestartSec=5s
+StandardOutput=tty
+TTYPath=/dev/tty2
+
+[Install]
+WantedBy=multi-user.target 
