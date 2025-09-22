@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #40-nvme.sh
-echo "nvme 설정"
+echo "nvme setting"
 if ! lsblk | grep -q "nvme0n1"; then
     echo "nvme0n1 does not exist."
     exit 1
