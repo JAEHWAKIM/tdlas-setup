@@ -70,27 +70,19 @@ sudo systemctl enable mariadb
 echo "MariaDB 서비스를 시작합니다..."
 sudo systemctl start mariadb
 
-echo "기본 데이터베이스와 사용자를 생성합니다..."
-sudo mysql -u root -p"$DB_PASS" <<EOF
--- 사용자 생성 (localhost 및 모든 호스트에서 접근 가능)
-CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';
-CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASS';
+read -p "DB TYPE (ex: tdlas): " DB_TYPE
 
--- 사용자 권한 부여 (localhost 및 모든 호스트에서 데이터베이스 접근 가능)
-GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';
-GRANT SELECT ON $DB_NAME.* TO '$DB_USER'@'%';
+TABLE_SQL="CREATE TABLE results(
+    seq_no BIGINT NOT NULL AUTO_INCREMENT, -- 순번 (자동 증가)
+    timestamp DATETIME,                    -- 타임스탬프
+    model_no TINYINT,                      -- 모델 번호
+    conc_value DOUBLE,                     -- 농도 값
+    exist_data TINYINT(1),                 -- 데이터 존재 여부
+    PRIMARY KEY (seq_no)                   -- 기본 키
+);"
 
--- 변경 사항 적용
-FLUSH PRIVILEGES;
-
--- 데이터베이스 생성 (존재하지 않을 경우)
-CREATE DATABASE IF NOT EXISTS $DB_NAME;
-
--- DB선택
-USE $DB_NAME;
-
--- 데이터베이스 테이블 생성
-CREATE TABLE channel_data (
+if [ "$DB_TYPE" == "tdlas" ]; then
+    TABLE_SQL="CREATE TABLE channel_data (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     record_id BIGINT NOT NULL,
     channel_id TINYINT(1) NOT NULL,
@@ -111,7 +103,30 @@ CREATE TABLE file_data (
     file_path VARCHAR(255) NOT NULL,
     file_size_kb INT,
     FOREIGN KEY (record_id) REFERENCES record_log(id)
-);
+);"
+fi
+
+echo "기본 데이터베이스와 사용자를 생성합니다..."
+sudo mysql -u root -p"$DB_PASS" <<EOF
+-- 사용자 생성 (localhost 및 모든 호스트에서 접근 가능)
+CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';
+CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASS';
+
+-- 사용자 권한 부여 (localhost 및 모든 호스트에서 데이터베이스 접근 가능)
+GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';
+GRANT SELECT ON $DB_NAME.* TO '$DB_USER'@'%';
+
+-- 변경 사항 적용
+FLUSH PRIVILEGES;
+
+-- 데이터베이스 생성 (존재하지 않을 경우)
+CREATE DATABASE IF NOT EXISTS $DB_NAME;
+
+-- DB선택
+USE $DB_NAME;
+
+-- 데이터베이스 테이블 생성
+${TABLE_SQL}
 
 -- 타임존 변경
 SET GLOBAL TIME_ZONE='+09:00';
