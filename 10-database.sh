@@ -90,13 +90,27 @@ CREATE DATABASE IF NOT EXISTS $DB_NAME;
 USE $DB_NAME;
 
 -- 데이터베이스 테이블 생성
-CREATE TABLE results(
-    seq_no BIGINT NOT NULL AUTO_INCREMENT, -- 순번 (자동 증가)
-    timestamp DATETIME,                    -- 타임스탬프
-    model_no TINYINT,                      -- 모델 번호
-    conc_value DOUBLE,                     -- 농도 값
-    exist_data TINYINT(1),                 -- 데이터 존재 여부
-    PRIMARY KEY (seq_no)                   -- 기본 키
+CREATE TABLE channel_data (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    record_id BIGINT NOT NULL,
+    channel_id TINYINT(1) NOT NULL,
+    mode_id TINYINT(1) NOT NULL,
+    recipe_id(1) INT NOT NULL,
+    value DOUBLE NOT NULL,
+    FOREIGN KEY (record_id) REFERENCES record_log(id)
+);
+
+CREATE TABLE recipe (
+    recipe_id INT PRIMARY KEY,
+    recipe_name VARCHAR(10) NOT NULL
+);
+
+CREATE TABLE file_data (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    record_id BIGINT NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    file_size_kb INT,
+    FOREIGN KEY (record_id) REFERENCES record_log(id)
 );
 
 -- 타임존 변경
