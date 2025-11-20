@@ -1,0 +1,18 @@
+[Unit]
+Description=TDLAS Dashboard Service
+After=network.target tdlas.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/tdlas
+ExecStart=/opt/tdlas/run_dashboard
+KillSignal=SIGINT
+SendSIGKILL=no
+Restart=on-failure
+StandardInput=tty
+StandardOutput=tty
+StandardError=tty
+TTYPath=/dev/tty1
+
+[Install]
+WantedBy=multi-user.target 

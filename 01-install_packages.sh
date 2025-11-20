@@ -15,6 +15,7 @@ packages=(
     ccrypt
     libgpiod-dev
     gpiod
+    libncurses-dev
 )
 
 for package in "${packages[@]}"; do
@@ -25,3 +26,7 @@ for package in "${packages[@]}"; do
         echo "$package is already installed."
     fi
 done
+
+# Set global Git configuration for user email and name
+git config --global user.email "jh.kim@easyrnd.co.kr"
+git config --global user.name "jh.kim"

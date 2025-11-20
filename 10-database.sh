@@ -6,28 +6,27 @@
 # MariaDB 설치 확인
 if command -v mariadb &> /dev/null; then
     echo "MariaDB가 이미 설치되어 있습니다. 스크립트를 종료합니다."
-    exit 0
+else
+	# MariaDB 설치
+	echo "MariaDB를 설치합니다..."
+	sudo apt update
+
+	packages=(
+		mariadb-server
+		mariadb-client
+		libmariadb3
+		libmariadb-dev
+	)
+
+	for package in "${packages[@]}"; do
+		if ! dpkg -l | grep -q "^ii  $package "; then
+			echo "Installing $package..."
+			sudo apt install -y "$package"
+		else
+			echo "$package is already installed."
+		fi
+	done
 fi
-
-# MariaDB 설치
-echo "MariaDB를 설치합니다..."
-sudo apt update
-
-packages=(
-    mariadb-server
-    mariadb-client
-    libmariadb3
-    libmariadb-dev
-)
-
-for package in "${packages[@]}"; do
-    if ! dpkg -l | grep -q "^ii  $package "; then
-        echo "Installing $package..."
-        sudo apt install -y "$package"
-    else
-        echo "$package is already installed."
-    fi
-done
 
 # 기본 데이터베이스 및 사용자 정보를 입력받기
 read -p "Database name: " DB_NAME
@@ -72,7 +71,7 @@ sudo systemctl start mariadb
 
 read -p "DB TYPE (ex: tdlas): " DB_TYPE
 
-TABLE_SQL="CREATE TABLE results(
+TABLE_SQL="CREATE TABLE IF NOT EXISTS  results(
     seq_no BIGINT NOT NULL AUTO_INCREMENT, -- 순번 (자동 증가)
     timestamp DATETIME,                    -- 타임스탬프
     model_no TINYINT,                      -- 모델 번호
@@ -82,17 +81,23 @@ TABLE_SQL="CREATE TABLE results(
 );"
 
 if [ "$DB_TYPE" == "tdlas" ]; then
-    TABLE_SQL="CREATE TABLE channel_data (
+TABLE_SQL="
+CREATE TABLE IF NOT EXISTS  record_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    timestamp DATETIME NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS  channel_data (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     record_id BIGINT NOT NULL,
     channel_id TINYINT(1) NOT NULL,
     mode_id TINYINT(1) NOT NULL,
-    recipe_id(1) INT NOT NULL,
+    recipe_id TINYINT(1) NOT NULL,
     value DOUBLE NOT NULL,
     FOREIGN KEY (record_id) REFERENCES record_log(id)
 );
 
-CREATE TABLE file_data (
+CREATE TABLE IF NOT EXISTS  file_data (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     record_id BIGINT NOT NULL,
     FOREIGN KEY (record_id) REFERENCES record_log(id)

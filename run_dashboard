@@ -1,0 +1,16 @@
+#!/bin/bash
+
+ORIGINAL_FONT="Lat15-Terminus16"
+TARGET_FONT="Lat15-Terminus28x14"
+
+setfont "$TARGET_FONT"
+
+sleep 10
+
+/opt/tdlas/dashboard
+
+setfont "$ORIGINAL_FONT"
+
+clear
+
+exit 0
