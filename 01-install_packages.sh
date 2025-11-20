@@ -13,6 +13,8 @@ packages=(
     libboost-all-dev
     htop
     ccrypt
+    libgpiod-dev
+    gpiod
 )
 
 for package in "${packages[@]}"; do

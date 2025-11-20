@@ -92,16 +92,9 @@ if [ "$DB_TYPE" == "tdlas" ]; then
     FOREIGN KEY (record_id) REFERENCES record_log(id)
 );
 
-CREATE TABLE recipe (
-    recipe_id INT PRIMARY KEY,
-    recipe_name VARCHAR(10) NOT NULL
-);
-
 CREATE TABLE file_data (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     record_id BIGINT NOT NULL,
-    file_path VARCHAR(255) NOT NULL,
-    file_size_kb INT,
     FOREIGN KEY (record_id) REFERENCES record_log(id)
 );"
 fi
