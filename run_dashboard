@@ -3,6 +3,8 @@
 ORIGINAL_FONT="Lat15-Terminus16"
 TARGET_FONT="Lat15-Terminus28x14"
 
+echo 2 > /sys/class/graphics/fbcon/rotate_all
+
 setfont "$TARGET_FONT"
 
 sleep 10

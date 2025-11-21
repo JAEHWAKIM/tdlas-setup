@@ -51,7 +51,8 @@ done
 export TDLAS_DB_PASSWORD=$DB_PASSWORD
 
 #decryption key
-read -p "암호화 키를 입력하시오 (32자 이상 권장): " DECRYPTION_KEY
+read -s -p "암호화 키를 입력하시오 (32자 이상 권장): " DECRYPTION_KEY
+echo
 export TDLAS_DECRYPTION_KEY=$DECRYPTION_KEY
 
 #display rotate
