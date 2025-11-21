@@ -1,11 +1,32 @@
 #!/bin/bash
 
-read -p "Do you want to flip the screen? (yes|no): " answer
-if [[ "$answer" != "yes" && "$answer" != "y" ]]; then
-    echo "Screen flip operation canceled."
-    exit 0
+if [ "${TDLAS_SETUP}" = "true" ]; then
+    angle="${TDLAS_DISPLAY_ROTATE}"
+else
+    read -p "Enter the rotation angle (0, 90, 180, 270): " angle
 fi
 
-if ! sudo crontab -l 2>/dev/null | grep -q "@reboot /bin/bash -c \"echo 2 > /sys/class/graphics/fbcon/rotate_all\""; then
-    (sudo crontab -l 2>/dev/null; echo "@reboot /bin/bash -c \"echo 2 > /sys/class/graphics/fbcon/rotate_all\"") | sudo crontab -
+case "$angle" in
+    0)
+        rotation=0
+        ;;
+    90)
+        rotation=1
+        ;;
+    180)
+        rotation=2
+        ;;
+    270)
+        rotation=3
+        ;;
+    *)
+        echo "Invalid angle. Please choose from 0, 90, 180, or 270."
+        exit 1
+        ;;
+esac
+
+if ! sudo crontab -l 2>/dev/null | grep -q "@reboot /bin/bash -c \"echo $rotation > /sys/class/graphics/fbcon/rotate_all\""; then
+    (sudo crontab -l 2>/dev/null; echo "@reboot /bin/bash -c \"echo $rotation > /sys/class/graphics/fbcon/rotate_all\"") | sudo crontab -
 fi
+
+echo "Screen rotation set to $angle degrees."

@@ -28,21 +28,29 @@ else
 	done
 fi
 
-# 기본 데이터베이스 및 사용자 정보를 입력받기
-read -p "Database name: " DB_NAME
-read -p "Database user: " DB_USER
-while true; do
-    read -sp "password: " DB_PASS
+if [ "${TDLAS_SETUP}" = "true" ]; then
+    DB_NAME="${TDLAS_DB_NAME}"
+    DB_USER="${TDLAS_DB_USER}"
+    DB_PASS="${TDLAS_DB_PASSWORD}"
+    DB_TYPE="${TDLAS_TYPE}"
+else
+    # 기본 데이터베이스 및 사용자 정보를 입력받기
+    read -p "Database name: " DB_NAME
+    read -p "Database user: " DB_USER
+    while true; do
+        read -sp "password: " DB_PASS
+        echo
+        read -sp "Confirm password: " DB_PASS_CONFIRM
+        echo
+        if [ "$DB_PASS" == "$DB_PASS_CONFIRM" ]; then
+            break
+        else
+            echo "Passwords do not match. Please try again."
+        fi
+    done
+    read -p "DB TYPE (ex: tdlas): " DB_TYPE
     echo
-    read -sp "Confirm password: " DB_PASS_CONFIRM
-    echo
-    if [ "$DB_PASS" == "$DB_PASS_CONFIRM" ]; then
-        break
-    else
-        echo "Passwords do not match. Please try again."
-    fi
-done
-echo
+fi
 
 # 보안 설정
 echo "MariaDB 보안 설정을 시작합니다..."
@@ -69,7 +77,6 @@ sudo systemctl enable mariadb
 echo "MariaDB 서비스를 시작합니다..."
 sudo systemctl start mariadb
 
-read -p "DB TYPE (ex: tdlas): " DB_TYPE
 
 TABLE_SQL="CREATE TABLE IF NOT EXISTS  results(
     seq_no BIGINT NOT NULL AUTO_INCREMENT, -- 순번 (자동 증가)
