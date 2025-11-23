@@ -25,8 +25,6 @@ case "$angle" in
         ;;
 esac
 
-if ! sudo crontab -l 2>/dev/null | grep -q "@reboot /bin/bash -c \"echo $rotation > /sys/class/graphics/fbcon/rotate_all\""; then
-    (sudo crontab -l 2>/dev/null; echo "@reboot /bin/bash -c \"echo $rotation > /sys/class/graphics/fbcon/rotate_all\"") | sudo crontab -
-fi
+echo $rotation > /sys/class/graphics/fbcon/rotate_all
 
 echo "Screen rotation set to $angle degrees."
