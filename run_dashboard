@@ -9,7 +9,7 @@ echo 2 > /sys/class/graphics/fbcon/rotate_all
 
 setfont "$TARGET_FONT"
 
-sleep 10
+sleep 5
 
 /opt/tdlas/dashboard
 
