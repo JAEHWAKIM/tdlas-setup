@@ -1,6 +1,7 @@
 [Unit]
 Description=TDLAS Broadcast Receiver Service
 After=network.target
+Conflicts=getty@tty3.service
 
 [Service]
 Type=simple
@@ -10,8 +11,12 @@ KillSignal=SIGINT
 SendSIGKILL=no
 Restart=on-failure
 RestartSec=5s
+
 StandardOutput=tty
 TTYPath=/dev/tty3
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
 
 [Install]
 WantedBy=multi-user.target 

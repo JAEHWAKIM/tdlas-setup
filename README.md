@@ -1,3 +1,3 @@
-1. ./setup.sh
+1. ./setup
 2. reboot
-3. ./nvme_setting.sh
+3. ./setup_nvme

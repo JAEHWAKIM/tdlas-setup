@@ -21,7 +21,7 @@ packages=(
 for package in "${packages[@]}"; do
     if ! dpkg -l | grep -q "^ii  $package "; then
         echo "Installing $package..."
-        sudo apt install -y "$package"
+        sudo DEBIAN_FRONTEND=noninteractive apt install -y "$package"
     else
         echo "$package is already installed."
     fi

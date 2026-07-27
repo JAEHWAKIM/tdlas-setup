@@ -1,0 +1,10 @@
+[Unit]
+Description=Enable DSI Backlight on Boot
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/enable-backlight.sh
+
+[Install]
+WantedBy=multi-user.target

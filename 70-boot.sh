@@ -7,56 +7,33 @@ echo "boot config"
 # Enable NVMe support in /boot/firmware/config.txt
 CONFIG_FILE="/boot/firmware/config.txt"
 
-# Add dtparam=nvme and dtparam=pciex1_gen=3 to the last lines of the config file
-if ! grep -q "^dtparam=nvme" "$CONFIG_FILE"; then
-    echo "Adding dtparam=nvme to $CONFIG_FILE..."
-    echo "dtparam=nvme" | sudo tee -a "$CONFIG_FILE"
-else
-    echo "dtparam=nvme already exists in $CONFIG_FILE."
-fi
+# Append config line only when the exact key=value line does not exist.
+ensure_config_line() {
+    local config_file="$1"
+    local key="$2"
+    local value="$3"
+    local line="${key}=${value}"
 
-if ! grep -q "^dtparam=pciex1_gen=3" "$CONFIG_FILE"; then
-    echo "Adding dtparam=pciex1_gen=3 to $CONFIG_FILE..."
-    echo "dtparam=pciex1_gen=3" | sudo tee -a "$CONFIG_FILE"
-else
-    echo "dtparam=pciex1_gen=3 already exists in $CONFIG_FILE."
-fi
+    if ! grep -q "^${line}$" "$config_file"; then
+        echo "Adding ${line} to $config_file..."
+        echo "$line" | sudo tee -a "$config_file"
+    else
+        echo "${line} already exists in $config_file."
+    fi
+}
 
-# Enable max USB current in /boot/firmware/config.txt
-if ! grep -q "^max_usb_current_enable=1" "$CONFIG_FILE"; then
-    echo "Adding max_usb_current_enable=1 to $CONFIG_FILE..."
-    echo "max_usb_current_enable=1" | sudo tee -a "$CONFIG_FILE"
-else
-    echo "max_usb_current_enable=1 already exists in $CONFIG_FILE."
-fi
+ensure_config_line "$CONFIG_FILE" "dtparam" "nvme"
+ensure_config_line "$CONFIG_FILE" "dtparam" "pciex1_gen=3"
+ensure_config_line "$CONFIG_FILE" "max_usb_current_enable" "1"
+ensure_config_line "$CONFIG_FILE" "dtoverlay" "vc4-kms-v3d"
+ensure_config_line "$CONFIG_FILE" "dtoverlay" "vc4-kms-dsi-ili9881-5inch"
+ensure_config_line "$CONFIG_FILE" "dtparam" "backlight=on"
 
-if ! grep -q "^hdmi_force_hotplug=1" "$CONFIG_FILE"; then
-    echo "Adding hdmi_force_hotplug=1 to $CONFIG_FILE..."
-    echo "hdmi_force_hotplug=1" | sudo tee -a "$CONFIG_FILE"
-else
-    echo "hdmi_force_hotplug=1 already exists in $CONFIG_FILE."
-fi
-
-if ! grep -q "^hdmi_cvt=1024 600 60 3 0 0 0" "$CONFIG_FILE"; then
-    echo "Adding hdmi_cvt=1024 600 60 3 0 0 0 to $CONFIG_FILE..."
-    echo "hdmi_cvt=1024 600 60 3 0 0 0" | sudo tee -a "$CONFIG_FILE"
-else
-    echo "hdmi_cvt=1024 600 60 3 0 0 0 already exists in $CONFIG_FILE."
-fi
-
-if ! grep -q "^hdmi_group=2" "$CONFIG_FILE"; then
-    echo "Adding hdmi_group=2 to $CONFIG_FILE..."
-    echo "hdmi_group=2" | sudo tee -a "$CONFIG_FILE"
-else
-    echo "hdmi_group=2 already exists in $CONFIG_FILE."
-fi
-
-if ! grep -q "^hdmi_mode=87" "$CONFIG_FILE"; then
-    echo "Adding hdmi_mode=87 to $CONFIG_FILE..."
-    echo "hdmi_mode=87" | sudo tee -a "$CONFIG_FILE"
-else
-    echo "hdmi_mode=87 already exists in $CONFIG_FILE."
-fi
+#구버전
+#ensure_config_line "$CONFIG_FILE" "hdmi_force_hotplug" "1"
+#ensure_config_line "$CONFIG_FILE" "hdmi_cvt" "1024 600 60 3 0 0 0"
+#ensure_config_line "$CONFIG_FILE" "hdmi_group" "2"
+#ensure_config_line "$CONFIG_FILE" "hdmi_mode" "87"
 
 # Prompt for restart
 read -p "System needs to restart for changes to take effect. Restart now? (y/n): " RESTART_CONFIRM

@@ -5,7 +5,8 @@ TARGET_FONT="Lat15-Terminus28x14"
 
 dmesg -n 3
 
-echo 2 > /sys/class/graphics/fbcon/rotate_all
+#1: 90, 2: 180
+echo 1 > /sys/class/graphics/fbcon/rotate_all
 
 setfont "$TARGET_FONT"
 

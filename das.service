@@ -1,6 +1,7 @@
 [Unit]
 Description=TDLAS DAS Service
 After=network.target syslog.service mariadb.service
+Conflicts=getty@tty2.service
 
 [Service]
 Type=simple
@@ -10,8 +11,12 @@ KillSignal=SIGINT
 SendSIGKILL=no
 Restart=on-failure
 RestartSec=5s
+
 StandardOutput=tty
 TTYPath=/dev/tty2
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
 
 [Install]
 WantedBy=multi-user.target 
