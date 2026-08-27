@@ -1,8 +1,14 @@
 #!/bin/bash
+set -euo pipefail
 
 #30-directories.sh
 PROGRAM_USER="easyrnd"
 PROGRAM_GROUP="easyrnd"
+
+if ! getent passwd "$PROGRAM_USER" >/dev/null || ! getent group "$PROGRAM_GROUP" >/dev/null; then
+    echo "Required user/group does not exist: $PROGRAM_USER:$PROGRAM_GROUP"
+    exit 1
+fi
 
 dirs=(
     /mnt/nvme

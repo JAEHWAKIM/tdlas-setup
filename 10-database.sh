@@ -1,4 +1,8 @@
 #!/bin/bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/config_helpers.sh"
 
 #10-database.sh
 # MariaDB 초기 설정 스크립트
@@ -32,6 +36,7 @@ if [ "${TDLAS_SETUP}" = "true" ]; then
     DB_NAME="${TDLAS_DB_NAME}"
     DB_USER="${TDLAS_DB_USER}"
     DB_PASS="${TDLAS_DB_PASSWORD}"
+    DB_READONLY_PASS="${TDLAS_DB_READONLY_PASSWORD}"
     DB_TYPE="${TDLAS_TYPE}"
 else
     # 기본 데이터베이스 및 사용자 정보를 입력받기
@@ -48,26 +53,36 @@ else
             echo "Passwords do not match. Please try again."
         fi
     done
+    while true; do
+        read -sp "External read-only password: " DB_READONLY_PASS
+        echo
+        read -sp "Confirm password: " DB_READONLY_PASS_CONFIRM
+        echo
+        if [ "$DB_READONLY_PASS" == "$DB_READONLY_PASS_CONFIRM" ]; then
+            break
+        else
+            echo "Passwords do not match. Please try again."
+        fi
+    done
     read -p "DB TYPE (ex: tdlas): " DB_TYPE
     echo
 fi
 
-# 보안 설정
-echo "MariaDB 보안 설정을 시작합니다..."
-sudo mysql_secure_installation <<EOF
+if [[ ! "$DB_NAME" =~ ^[A-Za-z0-9_]+$ || ! "$DB_USER" =~ ^[A-Za-z0-9_]+$ ]]; then
+    echo "Database name and user may contain only ASCII letters, digits, and underscores."
+    exit 1
+fi
+if [ -z "$DB_READONLY_PASS" ]; then
+    echo "External read-only password must not be empty."
+    exit 1
+fi
 
-y
-$DB_PASS
-$DB_PASS
-y
-y
-y
-y
-EOF
+DB_PASS_SQL=${DB_PASS//\'/\'\'}
+DB_READONLY_PASS_SQL=${DB_READONLY_PASS//\'/\'\'}
 
-# bind-address 값을 0.0.0.0으로 수정
-echo "bind-address 값을 0.0.0.0으로 수정합니다..."
-sudo sed -i "s/^bind-address\s*=.*/bind-address = 0.0.0.0/" /etc/mysql/mariadb.conf.d/50-server.cnf
+# 외부 조회 전용 계정이 필요하므로 MariaDB는 외부 인터페이스에도 바인딩합니다.
+echo "MariaDB를 외부 조회 가능하도록 설정합니다..."
+set_config_value /etc/mysql/mariadb.conf.d/50-server.cnf bind-address 0.0.0.0 " = "
 
 # MariaDB 서비스가 부팅 시 자동 시작되도록 설정
 echo "MariaDB 서비스를 부팅 시 자동 시작되도록 설정합니다..."
@@ -75,7 +90,7 @@ sudo systemctl enable mariadb
 
 # MariaDB 서비스 시작
 echo "MariaDB 서비스를 시작합니다..."
-sudo systemctl start mariadb
+sudo systemctl restart mariadb
 
 
 TABLE_SQL="CREATE TABLE IF NOT EXISTS  results(
@@ -111,27 +126,38 @@ CREATE TABLE IF NOT EXISTS  file_data (
 );"
 fi
 
-echo "기본 데이터베이스와 사용자를 생성합니다..."
-sudo mysql -u root -p"$DB_PASS" <<EOF
--- 사용자 생성 (localhost 및 모든 호스트에서 접근 가능)
-CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';
-CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASS';
+if [ "$DB_TYPE" == "tdlas" ]; then
+    READONLY_GRANTS="
+GRANT SELECT ON \`$DB_NAME\`.record_log TO 'tdlas_reader'@'%';
+GRANT SELECT ON \`$DB_NAME\`.channel_data TO 'tdlas_reader'@'%';
+GRANT SELECT ON \`$DB_NAME\`.file_data TO 'tdlas_reader'@'%';"
+else
+    READONLY_GRANTS="GRANT SELECT ON \`$DB_NAME\`.results TO 'tdlas_reader'@'%';"
+fi
 
--- 사용자 권한 부여 (localhost 및 모든 호스트에서 데이터베이스 접근 가능)
-GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';
-GRANT SELECT ON $DB_NAME.* TO '$DB_USER'@'%';
+echo "기본 데이터베이스와 사용자를 생성합니다..."
+sudo mariadb <<EOF
+DROP USER IF EXISTS 'root'@'%';
+DROP USER IF EXISTS ''@'localhost';
+DROP DATABASE IF EXISTS test;
+DELETE FROM mysql.db WHERE Db = 'test' OR Db LIKE 'test\\_%';
+CREATE DATABASE IF NOT EXISTS \`$DB_NAME\`;
+CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS_SQL';
+ALTER USER '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS_SQL';
+GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO '$DB_USER'@'localhost';
+DROP USER IF EXISTS 'tdlas_reader'@'%';
+CREATE USER 'tdlas_reader'@'%' IDENTIFIED BY '$DB_READONLY_PASS_SQL';
 
 -- 변경 사항 적용
 FLUSH PRIVILEGES;
 
--- 데이터베이스 생성 (존재하지 않을 경우)
-CREATE DATABASE IF NOT EXISTS $DB_NAME;
-
 -- DB선택
-USE $DB_NAME;
+USE \`$DB_NAME\`;
 
 -- 데이터베이스 테이블 생성
 ${TABLE_SQL}
+
+${READONLY_GRANTS}
 
 -- 타임존 변경
 SET GLOBAL TIME_ZONE='+09:00';

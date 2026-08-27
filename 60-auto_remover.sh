@@ -1,57 +1,55 @@
 #!/bin/bash
+set -euo pipefail
 
 AUTOREMOVER_PATH="/opt/tdlas/auto_remover.sh"
 
-if [ -f "$AUTOREMOVER_PATH" ]; then
-    echo "$AUTOREMOVER_PATH does exist."
+sudo tee "$AUTOREMOVER_PATH" > /dev/null <<'EOF'
+#!/bin/bash
+set -euo pipefail
+
+TARGET_PATH="/mnt/nvme"
+MAX_USAGE=80
+MIN_AGE_DAYS=365
+
+# Never delete from the underlying root filesystem if the NVMe is not mounted.
+SOURCE=$(findmnt -rn -M "$TARGET_PATH" -o SOURCE || true)
+if [[ -z "$SOURCE" || "$SOURCE" != /dev/nvme* ]]; then
+    echo "Auto-removal skipped: $TARGET_PATH is not mounted from an NVMe device."
     exit 0
 fi
 
-sudo tee "$AUTOREMOVER_PATH" > /dev/null <<EOF
-#!/bin/bash
-TARGET_PATH=/mnt/nvme/
-DISK_USAGE=\`df \${TARGET_PATH} | grep -v Use | awk '{print \$5}'\`
-
-#echo \$DISK_USAGE #0%
-
-USAGE_STR=\`echo \${DISK_USAGE} | cut -d '%' -f 1\`
-USAGE_INT=\`expr \$USAGE_STR\`
-
-MAX_USAGE=80
-
-RED='\033[0;31m'
-NC='\033[0m'
-
-
-if [ \${USAGE_INT} -gt \${MAX_USAGE} ]; then
-
-        echo -e \${TARGET_PATH}=\${RED}\$USAGE_INT%\${NC}
-        echo -e "Disk space is at least" \${RED}\${MAX_USAGE}%\${NC}
-
-        RDIRS=\`find \${TARGET_PATH} -mindepth 3 -maxdepth 3 -type d | sort\`
-
-        for dir in \${RDIRS}
-        do
-                echo "[\$dir] REMOVING BEGIN ================"
-
-                rm -rfv \$dir
-
-                echo "[\$dir] REMOVING END ================"
-
-                break;
-        done
-
-        find \${TARGET_PATH} -mindepth 1 -empty -type d -delete -print
-
-else
-        echo \${TARGET_PATH}=\$USAGE_INT%
+USAGE_INT=$(df -P -- "$TARGET_PATH" | awk 'NR == 2 {gsub(/%/, "", $5); print $5}')
+if [[ ! "$USAGE_INT" =~ ^[0-9]+$ ]]; then
+    echo "Auto-removal skipped: unable to determine disk usage."
+    exit 1
 fi
 
+if (( USAGE_INT <= MAX_USAGE )); then
+    echo "$TARGET_PATH=$USAGE_INT%"
+    exit 0
+fi
+
+echo "$TARGET_PATH usage is $USAGE_INT%; looking for directories older than $MIN_AGE_DAYS days."
+mapfile -d '' CANDIDATES < <(
+    find "$TARGET_PATH" -mindepth 3 -maxdepth 3 -type d -mtime +"$MIN_AGE_DAYS" -print0 | sort -z
+)
+
+if (( ${#CANDIDATES[@]} == 0 )); then
+    echo "No eligible directories found."
+    exit 0
+fi
+
+DIR="${CANDIDATES[0]}"
+echo "[$DIR] REMOVING BEGIN ================"
+rm -rfv -- "$DIR"
+echo "[$DIR] REMOVING END ================"
+
+find "$TARGET_PATH" -mindepth 1 -type d -empty -delete -print
 EOF
 
-sudo chmod +x "$AUTOREMOVER_PATH"
+sudo chmod 755 "$AUTOREMOVER_PATH"
 sudo chown root:root "$AUTOREMOVER_PATH"
 
-if ! sudo crontab -l 2>/dev/null | grep -q "$AUTOREMOVER_PATH"; then
+if ! sudo crontab -l 2>/dev/null | grep -Fq "$AUTOREMOVER_PATH"; then
     (sudo crontab -l 2>/dev/null; echo "*/10 * * * * $AUTOREMOVER_PATH") | sudo crontab -
 fi

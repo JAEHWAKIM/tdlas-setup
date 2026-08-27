@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 #20-driver.sh
 cd "$(dirname "$0")"
@@ -12,20 +13,23 @@ fi
 
 cd ./temp
 
-mv "../${DRIVER_FILENAME}" .
+if [ -f "../${DRIVER_FILENAME}" ] && [ ! -f "${DRIVER_FILENAME}" ]; then
+    cp "../${DRIVER_FILENAME}" .
+fi
 
 #압축해제
 if [ ! -d "linux-arm-v8" ]; then
-tar -xvzf ${DRIVER_FILENAME}
+    if [ ! -f "$DRIVER_FILENAME" ]; then
+        echo "Driver archive not found: $DRIVER_FILENAME"
+        exit 1
+    fi
+    tar -xzf "$DRIVER_FILENAME"
 fi
 
 cd ./linux-arm-v8
 
 #파일복사
-if [ -f "/usr/lib/libftd3xx.so" ]; then
-    sudo rm -v /usr/lib/libftd3xx.so
-fi
-sudo cp -v libftd3xx.so /usr/lib/
-sudo cp -v libftd3xx.so.${DRIVER_VERSION} /usr/lib/
-sudo cp -v 51-ftd3xx.rules /etc/udev/rules.d/
+sudo install -m 0644 "libftd3xx.so" "/usr/lib/libftd3xx.so"
+sudo install -m 0644 "libftd3xx.so.${DRIVER_VERSION}" "/usr/lib/libftd3xx.so.${DRIVER_VERSION}"
+sudo install -m 0644 "51-ftd3xx.rules" "/etc/udev/rules.d/51-ftd3xx.rules"
 sudo udevadm control --reload-rules

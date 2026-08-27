@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 #01-install_packages.sh
 # 패키지 설치 스크립트
@@ -26,7 +27,3 @@ for package in "${packages[@]}"; do
         echo "$package is already installed."
     fi
 done
-
-# Set global Git configuration for user email and name
-git config --global user.email "jh.kim@easyrnd.co.kr"
-git config --global user.name "jh.kim"

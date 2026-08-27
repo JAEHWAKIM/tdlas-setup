@@ -1,6 +1,11 @@
 #!/bin/bash
+set -euo pipefail
 
 VIMRC_PATH="$HOME/.vimrc"
+
+if [ -f "$VIMRC_PATH" ]; then
+    cp -p "$VIMRC_PATH" "$VIMRC_PATH.tdlas-backup"
+fi
 
 cat <<EOF > "$VIMRC_PATH"
 set nu

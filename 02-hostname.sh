@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 if [ "${TDLAS_SETUP}" = "true" ]; then
     new_hostname="${TDLAS_HOSTNAME}"

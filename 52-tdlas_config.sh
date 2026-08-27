@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 TDLAS_CONFIG_PATH="/etc/opt/tdlas/tdlas.config"
 
@@ -25,3 +26,4 @@ DB_LEVEL=2
 USB_LEVEL=2
 SERVER_LEVEL=2
 EOF
+sudo chmod 640 "$TDLAS_CONFIG_PATH"

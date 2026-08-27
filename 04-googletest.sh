@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 SOURCE_URL="https://github.com/google/googletest.git"
 TARGET_DIR="$HOME/sources/googletest"
@@ -9,7 +10,7 @@ if [ ! -d "$TARGET_DIR" ]; then
 fi
 
 cd "$TARGET_DIR"
-mkdir build
+mkdir -p build
 cd build
 cmake ..
 sudo make install
